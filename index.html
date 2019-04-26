@@ -1,0 +1,77 @@
+<html>
+<head>
+  <title>Was bringe ich mit?</title>
+</head>
+<style>
+  form {
+    display: grid;
+    grid-template-columns: 200px 300px;
+    column-gap: 10px;
+  }
+  form label, input {
+    width: 200px;
+    display: block;
+    margin: 10px;
+  }
+  label {
+    text-align: right;
+  }
+  button {
+    margin: 10px;
+  }
+</style>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+  <script>
+    const mitbringenNet = 'https://mitbringen.net/'
+
+    let result = '';
+
+    const createList = function() {
+      id = $('input[name="id"]')[0].value;
+      name = $('input[name="name"]')[0].value;
+
+      $.ajax( {
+        url: mitbringenNet + id, 
+        type: 'GET',
+        headers: {
+          'Accept-Language': 'de'
+        },
+        success: function(result) {
+          test = $('<template></template>').append($.parseHTML(result));
+          rows = test.find('#itemList .row');
+          items = []
+          rows.each( function(i, el) {
+            item = $(this).find('.item div').text();
+            bringer = $(this).find('.bringer ul li');
+
+            amount = undefined;
+            bringer.each( function(index, element) {
+              text = $(this).text();
+              if(text.includes(name)) {
+                amount = text.slice(name.length);
+              }
+            });
+
+            if(amount !== undefined) {   
+              $('#list').append('<li>' + item + amount+ '</li>');
+            }
+          });
+        },
+        error: function(error) {console.log(error) }
+
+      }) 
+    }
+  </script>
+  <form onsubmit="createList();return false;">
+    <label for="name">Name</label>
+    <input type="text" name="name" />
+    <label for="id">Mitbringen.net Pin</label>
+    <input type="text" name="id" />
+    <button type="reset" value="Reset">Zurücksetzen</button>
+    <button type="submit" value="Submit">Erstelle meine Mitbringliste</button>
+
+  </form>
+  <ul id="list"></ul>
+</body>
+</html>
