@@ -1,36 +1,37 @@
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Was bringe ich mit?</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
-<style>
-  form {
-    display: grid;
-    grid-template-columns: 200px 300px;
-    column-gap: 10px;
-  }
-  form label, input, select {
-    width: 200px;
-    display: block;
-    margin: 10px;
-  }
-  label {
-    text-align: right;
-  }
-  button {
-    margin: 10px;
-  }
-  #list {
-    list-style-type:none;
-  }
-  #list li {
-    line-height:1.5em;
-  }
-  #list li:before {
-    content:'\25A2 ';
-    display:inline-block;
-    padding-right:5px;
-  }
-</style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+  <style>
+    form {
+      display: grid;
+      grid-template-columns: 200px 300px;
+      column-gap: 10px;
+    }
+    form label, input, select {
+      width: 200px;
+      display: block;
+      margin: 10px;
+    }
+    label {
+      text-align: right;
+    }
+    button {
+      margin: 10px;
+    }
+    #list {
+      list-style-type:none;
+    }
+    #list li {
+      line-height:1.5em;
+    }
+    #list li:before {
+      content:'\25A2 ';
+      display:inline-block;
+      padding-right:5px;
+    }
+  </style>
 </head>
 <body>
   <form onsubmit="return false;">
@@ -38,7 +39,7 @@
     <input type="text" name="name" id="name">
     <label for="id">Mitbringen.net Pin </label>
     <input type="text" name="id" id="id">
-    <button type="reset" value="Reset">Zur&uuml;cksetzen</button>
+    <button type="reset" value="Reset">Zurücksetzen</button>
     <button type="submit" value="Submit" id="btnerstelle">Erstelle meine Mitbringliste</button>
   </form>
   <ul id="list"></ul>
@@ -47,7 +48,6 @@
     var mitbringenNet = 'https://mitbringen.net/',
         dom = '',
         searchParams = new URLSearchParams(window.location.search);
-
 
     $(function() {
         // Pin is in get-parameters, then autofill formield
@@ -62,19 +62,17 @@
                     'Accept-Language': 'de'
                 },
                 success: function(result) {
-                    var bringers = ['- Bitte w&auml;hlen -'];
+                    var bringers = new Set(['- Bitte wählen -']);
                     dom = $.parseHTML(result);
 
                     $(dom).find('[data-bringer]').each(function(idx,item) {
                         var b=item.textContent.replace(/\s*\(.*\)/,'');
-                        if (bringers.indexOf(b) < 0) {
-                            bringers.push(b);
-                        }
+                        bringers.add(b);
                     });
-                    bringers.sort();
+                    bringers = [...bringers].sort();
                     var select = '<select name="name" id="name">';
-                    for (i=0; i<bringers.length;i++) {
-                        select += '<option value="' + bringers[i] + '">' + bringers[i] + '</option>';
+                    for (bringer of bringers) {
+                        select += `<option value="${bringer}">${bringer}</option>`;
                     };
                     select += '</select>';
                     $('#name').replaceWith($(select));
@@ -102,7 +100,7 @@
 
     function extractList(result) {
 
-        var test = $('<template></template>').append(result),
+        var test = $(result),
             rows = test.find('#itemList .row'),
             items = [];
 
@@ -111,17 +109,23 @@
 
         rows.each( function(i, el) {
             var item = $(this).find('.item div').text(),
-                bringer = $(this).find('.bringer ul li'),
-                amount = undefined;
-            bringer.each( function(index, element) {
-                text = $(this).text();
-                if(text.includes($('#name').val())) {
-                    amount = text.slice($('#name').val().length);
+                bringerLi = $(this).find('.bringer ul li'),
+                amount = undefined,
+                unit = $(this).find('.quantity div')[0];
+            unit = $(unit).text()
+            unit = unit.replace(/\d+(.*)/, '$1');
+
+            bringerLi.each( function(index, element) {
+                var bringer = $(this).text().replace(/\s*\(.*\)/,'');
+                var who = $('#name').val()
+                
+                if(bringer === who) {
+                    amount = $(this).text().match(/(?:[^\d])+\((\d+).*\)/)[1] + unit;
                 }
             });
 
             if(amount !== undefined) {
-                $('#list').append('<li><span>' + item + amount+ '</span></li>');
+                $('#list').append(`<li><span><b>${item}</b> (${amount})</span></li>`);
             }
         });
     }
